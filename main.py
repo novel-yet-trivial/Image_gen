@@ -26,6 +26,7 @@ except ImportError:
 from PIL import Image, ImageTk
 import praw
 import os
+from itertools import count
 
 CHOICES = ['pics', 'gifs', 'aww', 'EarthPorn', 'funny', 'nsfw']
 IMG_FORMATS = ['.jpg', '.gif', '.png', '.jpeg', '.bmp']
@@ -45,6 +46,42 @@ class ImageGetter(praw.Reddit):
                     return item.url
         else:
             return self.images[num]
+
+class ImageLabel(ttk.Label):
+    """a label that displays images, and plays them if they are gifs"""
+    def load(self, im):
+        if isinstance(im, str):
+            im = Image.open(im)
+        self.loc = 0
+        self.frames = []
+
+        try:
+            for i in count(1):
+                self.frames.append(ImageTk.PhotoImage(im.convert('RGB')))
+                im.seek(i)
+        except EOFError:
+            pass
+
+        try:
+            self.delay = im.info['duration']
+        except:
+            self.delay = 100
+
+        if len(self.frames) == 1:
+            self.config(image=self.frames[0])
+        else:
+            self.next_frame()
+
+    def unload(self):
+        self.config(image=None)
+        self.frames = None
+
+    def next_frame(self):
+        if self.frames:
+            self.loc += 1
+            self.loc %= len(self.frames)
+            self.config(image=self.frames[self.loc])
+            self.after(self.delay, self.next_frame)
 
 class GUI(ttk.Frame):
     def __init__(self, master):
@@ -93,10 +130,9 @@ class GUI(ttk.Frame):
         forward.grid(column=2, row=5)
 
         # set inital holding image
-        init_image = "initial.jpg"
-        image = Image.open(init_image)
-        self.photo = ImageTk.PhotoImage(image)
-        self.img_label = ttk.Label(self, image=self.photo)
+        self.img_label = ImageLabel(self)
+        #~ self.img_label.load("initial.jpg")
+        self.img_label.load("rMYMUPQ.gif")
         self.img_label.grid(column=1, row=6, columnspan=2, padx=5, pady=5)
 
     def create_img_list(self):
@@ -114,10 +150,9 @@ class GUI(ttk.Frame):
         # resize image
         wpercent = (self.winfo_width() / float(image.size[0]))
         hsize = int((float(image.size[1]) * float(wpercent)))
-        image = image.resize((self.winfo_width(), hsize), Image.ANTIALIAS)
+        #~ image = image.resize((self.winfo_width(), hsize), Image.ANTIALIAS)
 
-        self.photo = ImageTk.PhotoImage(image)
-        self.img_label.config(image=self.photo)
+        self.img_label.load(image)
 
     def increse_num(self):
         self.img_num += 1
