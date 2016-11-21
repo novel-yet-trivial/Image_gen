@@ -132,7 +132,7 @@ class GUI(ttk.Frame):
         # set inital holding image
         self.img_label = ImageLabel(self)
         #~ self.img_label.load("initial.jpg")
-        self.img_label.load("rMYMUPQ.gif")
+        self.img_label.load("gif_test.gif")
         self.img_label.grid(column=1, row=6, columnspan=2, padx=5, pady=5)
 
     def create_img_list(self):
